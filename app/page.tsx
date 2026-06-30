@@ -1,11 +1,12 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Header } from '@/components/dashboard/header'
 import { StatsGrid } from '@/components/dashboard/stats-grid'
 import { ClimateMap } from '@/components/dashboard/climate-map'
+import { ClimateCharts } from '@/components/dashboard/climate-charts'
 
 export default async function Home() {
-  const supabase = await createServerClient()
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -46,6 +47,9 @@ export default async function Home() {
 
         {/* Stats Grid */}
         <StatsGrid />
+
+        {/* Data Visualization Charts */}
+        <ClimateCharts />
 
         {/* Climate Map */}
         <ClimateMap />
