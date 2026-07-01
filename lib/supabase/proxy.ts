@@ -2,6 +2,16 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // If Supabase credentials are not available, skip middleware
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.next({
+      request,
+    })
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -9,8 +19,8 @@ export async function updateSession(request: NextRequest) {
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -42,11 +52,13 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (
-    // if the user is not logged in and the app path, in this case, /protected, is accessed, redirect to the login page
-    request.nextUrl.pathname.startsWith('/protected') &&
-    !user
+    // if the user is not logged in and accessing protected or home routes, redirect to login
+    (!request.nextUrl.pathname.startsWith('/auth') &&
+      !request.nextUrl.pathname.startsWith('/api') &&
+      !request.nextUrl.pathname.match(/\.(svg|png|jpg|jpeg|gif|webp)$/) &&
+      !user)
   ) {
-    // no user, potentially respond by redirecting the user to the login page
+    // no user, redirect to the login page
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
